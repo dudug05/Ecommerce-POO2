@@ -1,0 +1,51 @@
+from ecommerce.criador_notificacao import CriadorNotificacao
+from ecommerce.expedidor import Expedidor
+
+
+class ServicoNotificacaoPedido:
+
+    def __init__(self, criador_notificacao: CriadorNotificacao) -> None:
+        self._criador_notificacao = criador_notificacao
+
+    def pedido_pago(self, pedido: "Pedido", cliente: "Cliente") -> None:
+        mensagem = (
+            f"Ola, {cliente.nome}. O pagamento do seu pedido foi confirmado. "
+            f"Total: R$ {pedido.calcular_total():.2f}."
+        )
+        self._notificar(cliente, mensagem)
+
+    def pedido_enviado(self, pedido: "Pedido", cliente: "Cliente") -> None:
+        rastreio = pedido.entrega.codigo_rastreio if pedido.entrega is not None else "-"
+        mensagem = (
+            f"Ola, {cliente.nome}. Seu pedido foi enviado. "
+            f"Codigo de rastreio: {rastreio}."
+        )
+        self._notificar(cliente, mensagem)
+
+    def _notificar(self, cliente: "Cliente", mensagem: str) -> None:
+        notificacao = self._criador_notificacao.criar(cliente.canal_preferido)
+        notificacao.enviar(cliente.contato, mensagem)
+        
+if __name__ == '__main__':
+    
+    from ecommerce.carrinho import Carrinho
+    from ecommerce.categoria import Categoria
+    from ecommerce.cliente import Cliente
+    from ecommerce.produto import Produto
+    from ecommerce.forma_pagamento import FormaPagamento
+    
+    cat = Categoria('Informatica')
+    notebook = Produto("Notebook Top", 9980.00, 10, cat)
+    
+    Cliente1 = Cliente("Eduardo", "dudugx05@gmail.com", "55 47 984975167", CriadorNotificacao.EMAIL)
+    Cliente1.carrinho = Carrinho()
+    Cliente1.carrinho.adicionar_item(notebook, 2)
+    pedido = Cliente1.finalizar_compra()
+    
+    servico = ServicoNotificacaoPedido(CriadorNotificacao())
+
+    pedido.confirmar_pagamento()
+    servico.pedido_pago(pedido, cliente)
+
+    Expedidor().despachar(pedido)
+    servico.pedido_enviado(pedido, cliente)

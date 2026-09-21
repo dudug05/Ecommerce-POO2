@@ -16,7 +16,7 @@ class Pedido:
         self._status = StatusPedido.CRIADO
         self._pagamento: Pagamento | None = None
         self._cupom: Cupom | None = None
-        self._criador_pagamento = CriadorPagamento()
+        #self._criador_pagamento = CriadorPagamento()
         self._entrega: Entrega | None = None
 
     @property
@@ -85,6 +85,7 @@ class Pedido:
 
     def confirmar_pagamento(
         self,
+        criador_pagamento: CriadorPagamento,
         forma: FormaPagamento = FormaPagamento.PIX,
         **dados: object,
     ) -> None:
