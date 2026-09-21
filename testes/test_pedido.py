@@ -1,0 +1,123 @@
+import pytest
+from ecommerce.pedido import Pedido
+from ecommerce.produto import Produto
+from ecommerce.categoria import Categoria
+from ecommerce.estrategia_desconto import EstrategiaDesconto
+from ecommerce.cupom import Cupom
+from ecommerce.estrategia_frete import EstrategiaFrete
+from datetime import date, timedelta
+
+
+class TestePedido:
+    
+    def setup_method(self) -> None:
+        self.cat = Categoria("Informática")
+        self.notebook = Produto("Notebook", 3500.0, 10, self.cat)
+        self.mouse = Produto("Mouse", 150.0, 20, self.cat)
+
+    def test_criar_pedido_vazio(self) -> None:
+        pedido = Pedido()
+        assert pedido.quantidade_itens() == 0
+        assert pedido.calcular_total() == 0.0
+        assert pedido.status == "criado"
+
+    def test_adicionar_item(self) -> None:
+        pedido = Pedido()
+        pedido.adicionar_item(self.notebook, 2)
+        assert pedido.quantidade_itens() == 1
+
+    def test_calcular_total(self) -> None:
+        pedido = Pedido()
+        pedido.adicionar_item(self.notebook, 2)
+        pedido.adicionar_item(self.mouse, 3)
+        total_esperado = (2 * 3500.0) + (3 * 150.0)
+        assert pedido.calcular_total() == total_esperado
+
+    def test_nao_adicionar_apos_finalizado(self) -> None:
+        pedido = Pedido()
+        pedido.adicionar_item(self.notebook, 1)
+        pedido._status = "pago"
+        with pytest.raises(ValueError):
+            pedido.adicionar_item(self.mouse, 1)
+def test_desconto_cliente_vip(self) -> None:
+    pedido = Pedido()
+    pedido.adicionar_item(self.notebook, 1)
+    assert pedido.calcular_total_com_desconto("vip") == 3500.0 * 0.85
+
+def test_desconto_cliente_frequente(self) -> None:
+    pedido = Pedido()
+    pedido.adicionar_item(self.notebook, 1)
+    assert pedido.calcular_total_com_desconto("frequente") == 3500.0 * 0.90
+
+def test_desconto_aniversario(self) -> None:
+    pedido = Pedido()
+    pedido.adicionar_item(self.notebook, 1)
+    assert pedido.calcular_total_com_desconto("aniversario") == 3500.0 * 0.80
+
+def test_sem_desconto_cliente_comum(self) -> None:
+    pedido = Pedido()
+    pedido.adicionar_item(self.notebook, 1)
+    assert pedido.calcular_total_com_desconto("comum") == 3500.0
+    
+def test_calcular_total_sem_estrategia(self) -> None:
+    pedido = Pedido()
+    pedido.adicionar_item(self.notebook, 1)
+    assert pedido.calcular_total() == 3500.0
+
+def test_calcular_total_com_estrategia_sem_desconto(self) -> None:
+    pedido = Pedido()
+    pedido.adicionar_item(self.notebook, 1)
+    assert pedido.calcular_total(SemDesconto()) == 3500.0
+
+def test_calcular_total_com_desconto_percentual(self) -> None:
+    pedido = Pedido()
+    pedido.adicionar_item(self.notebook, 1)
+    assert pedido.calcular_total(DescontoPercentual(15)) == 3500.0 * 0.85
+    
+def test_aplicar_cupom_valido(self) -> None:
+    pedido = Pedido()
+    pedido.adicionar_item(self.notebook, 1)
+    cupom = Cupom("BEMVINDO10", date.today() + timedelta(days=1), DescontoPercentual(10))
+    pedido.aplicar_cupom(cupom)
+    assert pedido.cupom is cupom
+    assert pedido.calcular_total() == 3500.0 * 0.90
+
+def test_aplicar_cupom_expirado_lanca_erro(self) -> None:
+    pedido = Pedido()
+    pedido.adicionar_item(self.notebook, 1)
+    cupom = Cupom("PROMOANTIGA", date.today() - timedelta(days=1), DescontoPercentual(10))
+    with pytest.raises(ValueError):
+        pedido.aplicar_cupom(cupom)
+
+def test_pagamento_reflete_desconto_do_cupom(self) -> None:
+    pedido = Pedido()
+    pedido.adicionar_item(self.notebook, 1)
+    cupom = Cupom("BEMVINDO10", date.today() + timedelta(days=1), DescontoPercentual(10))
+    pedido.aplicar_cupom(cupom)
+    pedido.confirmar_pagamento()
+    assert pedido.pagamento.valor == 3500.0 * 0.90
+    
+def test_calcular_valor_final_sem_frete(self) -> None:
+    pedido = Pedido()
+    pedido.adicionar_item(self.notebook, 1)
+    assert pedido.calcular_valor_final() == 3500.0
+
+def test_calcular_valor_final_com_frete_fixo(self) -> None:
+    pedido = Pedido()
+    pedido.adicionar_item(self.notebook, 1)
+    assert pedido.calcular_valor_final(estrategia_frete=FreteFixo(25.0)) == 3525.0
+
+def test_calcular_valor_final_com_desconto_e_frete(self) -> None:
+    pedido = Pedido()
+    pedido.adicionar_item(self.notebook, 1)
+    valor_final = pedido.calcular_valor_final(
+        estrategia_desconto=DescontoPercentual(10),
+        estrategia_frete=FreteFixo(25.0),
+    )
+    assert valor_final == (3500.0 * 0.90) + 25.0
+
+def test_calcular_valor_final_frete_gratis_acima_do_minimo(self) -> None:
+    pedido = Pedido()
+    pedido.adicionar_item(self.notebook, 1)
+    estrategia_frete = FreteGratisAcimaDe(valor_minimo=1000.0, valor_frete=40.0)
+    assert pedido.calcular_valor_final(estrategia_frete=estrategia_frete) == 3500.0

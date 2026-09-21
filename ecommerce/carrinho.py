@@ -1,4 +1,5 @@
 from ecommerce.item_carrinho import ItemCarrinho
+from ecommerce.pedido import Pedido
 
 
 class Carrinho:
@@ -20,7 +21,18 @@ class Carrinho:
     def quantidade_itens(self) -> int:
         return len(self.itens)
     
-if __name__ == "__main__":  # 
+    def finalizar(self) -> None:
+        if not self.itens:
+            raise ValueError("Carrinho Vazio")
+        pedido = Pedido()
+        for item in self.itens:
+            pedido.adicionar_item(item.produto, item.quantidade)
+        return pedido
+    
+    def esvaziar(self) -> None:
+        self.itens.clear()
+    
+if __name__ == "__main__":  
     from ecommerce.categoria import Categoria
     from ecommerce.produto import Produto
 
@@ -34,3 +46,4 @@ if __name__ == "__main__":  #
 
     print(f"Itens no carrinho: {carrinho.quantidade_itens()}")
     print(f"Total: R$ {carrinho.calcular_total():.2f}")
+    
